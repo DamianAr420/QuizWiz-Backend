@@ -1,0 +1,17 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+App_Data/
+TestResults/
+nupkg/
+*.db
+*.db-journal
+appsettings.Development.json
+dist/
+node_modules/
+.env
