@@ -37,6 +37,7 @@ namespace QuizWiz_Backend.Controllers
                 DisplayName = dto.DisplayName,
                 Email = dto.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                Role = "User",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -44,20 +45,24 @@ namespace QuizWiz_Backend.Controllers
             await _context.SaveChangesAsync();
 
             var token = CreateToken(user);
-            return Ok(new AuthResponseDto(new { user.Id, user.DisplayName, user.Email }, token));
+            var userDto = new UserDto(user.Id, user.DisplayName, user.Email, user.Role);
+
+            return Ok(new AuthResponseDto(userDto, token));
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => (u.Email == dto.Identifier || u.DisplayName == dto.Identifier));
+                .FirstOrDefaultAsync(u => u.Email == dto.Identifier || u.DisplayName == dto.Identifier);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized(new { message = "Nieprawidłowe dane logowania." });
 
             var token = CreateToken(user);
-            return Ok(new AuthResponseDto(new { user.Id, user.DisplayName, user.Email }, token));
+            var userDto = new UserDto(user.Id, user.DisplayName, user.Email, user.Role);
+
+            return Ok(new AuthResponseDto(userDto, token));
         }
 
         private string CreateToken(User user)
@@ -66,16 +71,20 @@ namespace QuizWiz_Backend.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.DisplayName)
+                new Claim(ClaimTypes.Name, user.DisplayName),
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetSection("AppSettings:Token").Value!));
+            var tokenKey = _config.GetSection("AppSettings:Token").Value;
+            if (string.IsNullOrEmpty(tokenKey)) throw new Exception("JWT Token Key is missing in appsettings.json");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(7),
+                Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = creds
             };
 
