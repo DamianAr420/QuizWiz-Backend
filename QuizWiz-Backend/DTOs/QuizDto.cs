@@ -6,7 +6,8 @@
         string Description, 
         int TimeLimitSeconds, 
         int MaxQuestions,
+        bool IsOfficial,
         List<CreateQuestionDto> Questions
     );
-    public record QuizListDto(int Id, string Title, string Description, int QuestionsCount, int TimeLimitSeconds);
+    public record QuizListDto(int Id, string Title, string Description, int QuestionsCount, int TimeLimitSeconds, bool IsOfficial);
 }

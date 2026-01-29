@@ -16,10 +16,23 @@ namespace QuizWiz_Backend.Controllers
         public QuizzesController(AppDbContext context) => _context = context;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<QuizListDto>>> GetQuizzes()
+        public async Task<ActionResult<IEnumerable<QuizListDto>>> GetQuizzes([FromQuery] bool? official)
         {
-            return await _context.Quizzes
-                .Select(q => new QuizListDto(q.Id, q.Title, q.Description, q.Questions.Count, q.TimeLimitSeconds))
+            var query = _context.Quizzes.AsQueryable();
+
+            if (official.HasValue)
+            {
+                query = query.Where(q => q.IsOfficial == official.Value);
+            }
+
+            return await query
+                .Select(q => new QuizListDto(
+                    q.Id,
+                    q.Title,
+                    q.Description,
+                    q.Questions.Count,
+                    q.TimeLimitSeconds,
+                    q.IsOfficial))
                 .ToListAsync();
         }
 
@@ -44,6 +57,7 @@ namespace QuizWiz_Backend.Controllers
                 Description = dto.Description,
                 TimeLimitSeconds = dto.TimeLimitSeconds,
                 MaxQuestions = dto.MaxQuestions,
+                IsOfficial = dto.IsOfficial,
                 Questions = dto.Questions.Select(q => new Question
                 {
                     Text = q.Text,
