@@ -8,6 +8,9 @@
         public int TimeLimitSeconds { get; set; } = 30;
         public int MaxQuestions { get; set; } = 10;
         public bool IsOfficial { get; set; } = false;
+        public bool IsVisible { get; set; } = true;
+        public bool IsPlayable { get; set; } = true;
+        public string? AuthorId { get; set; }
         public List<Question> Questions { get; set; } = new();
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
