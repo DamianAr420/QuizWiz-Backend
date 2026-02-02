@@ -19,8 +19,15 @@ namespace QuizWiz_Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<QuizListDto>>> GetQuizzes()
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
             return await _context.Quizzes
-                .Where(q => q.IsVisible)
+                .Where(q =>
+                    q.IsVisible ||
+                    isAdmin ||
+                    (userId != null && q.AuthorId == userId)
+                )
                 .Select(q => new QuizListDto(
                     q.Id, q.Title, q.Description, q.Questions.Count,
                     q.TimeLimitSeconds, q.IsOfficial, q.IsVisible, q.IsPlayable, q.AuthorId))
