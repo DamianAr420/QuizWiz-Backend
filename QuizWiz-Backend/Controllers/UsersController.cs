@@ -30,7 +30,7 @@ namespace QuizWiz_Backend.Controllers
             }
 
             var user = await _context.Users
-                .Select(u => new { u.Id, u.DisplayName, u.Email, u.CreatedAt })
+                .Select(u => new { u.Id, u.DisplayName, u.Email, u.CreatedAt, u.AvatarUrl, u.Role })
                 .FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null) return NotFound();
@@ -104,6 +104,46 @@ namespace QuizWiz_Backend.Controllers
             });
         }
 
+        [HttpPost("upload-avatar")]
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return BadRequest("Brak pliku.");
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (!allowedExtensions.Contains(extension)) return BadRequest("Niepoprawny format.");
+
+            var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/avatars");
+            if (!Directory.Exists(uploadFolder))
+            {
+                Directory.CreateDirectory(uploadFolder);
+            }
+
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var path = Path.Combine(uploadFolder, fileName);
+
+            using (var stream = new FileStream(path, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var userId = GetCurrentUserId();
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(user.AvatarUrl))
+            {
+                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.AvatarUrl.TrimStart('/'));
+                if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+            }
+
+            user.AvatarUrl = $"/uploads/avatars/{fileName}";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { url = user.AvatarUrl });
+        }
+
         private int CalculateStreakFromDates(List<DateTime> dates)
         {
             if (dates == null || !dates.Any()) return 0;
@@ -133,6 +173,12 @@ namespace QuizWiz_Backend.Controllers
             }
 
             return streak;
+        }
+
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.Parse(userIdClaim!);
         }
     }
 

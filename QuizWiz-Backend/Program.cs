@@ -51,6 +51,8 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowVueApp");
 
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
