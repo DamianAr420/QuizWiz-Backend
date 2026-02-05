@@ -111,5 +111,34 @@ namespace QuizWiz_Backend.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpPost("{id}/submit")]
+        [Authorize]
+        public async Task<IActionResult> SubmitResult(int id, [FromBody] SubmitResultDto dto)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+                return Unauthorized();
+
+            var quizExists = await _context.Quizzes.AnyAsync(q => q.Id == id);
+            if (!quizExists) return NotFound("Quiz nie istnieje.");
+
+            if (dto.Score > dto.TotalQuestions)
+                return BadRequest("Wynik nie może być wyższy niż liczba pytań.");
+
+            var attempt = new QuizAttempt
+            {
+                UserId = userId,
+                QuizId = id,
+                Score = dto.Score,
+                TotalQuestions = dto.TotalQuestions,
+                CompletedAt = DateTime.UtcNow
+            };
+
+            _context.QuizAttempts.Add(attempt);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Wynik zapisany pomyślnie!" });
+        }
     }
 }

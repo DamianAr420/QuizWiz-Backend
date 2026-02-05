@@ -18,4 +18,5 @@
         int Id, string Title, string Description, int QuestionsCount,
         int TimeLimitSeconds, bool IsOfficial, bool IsVisible, bool IsPlayable, string? AuthorId
     );
+    public record SubmitResultDto(int Score, int TotalQuestions);
 }

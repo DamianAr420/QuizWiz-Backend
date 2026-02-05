@@ -11,6 +11,7 @@ namespace QuizWiz_Backend.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Quiz> Quizzes => Set<Quiz>();
         public DbSet<Question> Questions => Set<Question>();
+        public DbSet<QuizAttempt> QuizAttempts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,6 +37,16 @@ namespace QuizWiz_Backend.Data
                 .WithOne()
                 .HasForeignKey(q => q.QuizId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<QuizAttempt>()
+                .HasOne(qa => qa.User)
+                .WithMany()
+                .HasForeignKey(qa => qa.UserId);
+
+            modelBuilder.Entity<QuizAttempt>()
+                .HasOne(qa => qa.Quiz)
+                .WithMany()
+                .HasForeignKey(qa => qa.QuizId);
         }
     }
 }

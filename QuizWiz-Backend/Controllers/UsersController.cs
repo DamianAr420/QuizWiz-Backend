@@ -66,6 +66,74 @@ namespace QuizWiz_Backend.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetUserStats()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out int userId)) return Unauthorized();
+
+            var statsQuery = await _context.QuizAttempts
+                .Where(a => a.UserId == userId)
+                .GroupBy(a => a.UserId)
+                .Select(g => new
+                {
+                    QuizzesPlayed = g.Count(),
+                    TotalQuestionsAnswered = g.Sum(a => a.TotalQuestions),
+                    CorrectAnswers = g.Sum(a => a.Score)
+                })
+                .FirstOrDefaultAsync();
+
+            var dates = await _context.QuizAttempts
+                .Where(a => a.UserId == userId)
+                .Select(a => a.CompletedAt)
+                .OrderByDescending(d => d)
+                .ToListAsync();
+
+            if (statsQuery == null)
+            {
+                return Ok(new { QuizzesPlayed = 0, TotalQuestionsAnswered = 0, CorrectAnswers = 0, BestStreak = 0 });
+            }
+
+            return Ok(new
+            {
+                statsQuery.QuizzesPlayed,
+                statsQuery.TotalQuestionsAnswered,
+                statsQuery.CorrectAnswers,
+                BestStreak = CalculateStreakFromDates(dates)
+            });
+        }
+
+        private int CalculateStreakFromDates(List<DateTime> dates)
+        {
+            if (dates == null || !dates.Any()) return 0;
+
+            var distinctDates = dates
+                .Select(d => d.Date)
+                .Distinct()
+                .OrderByDescending(d => d)
+                .ToList();
+
+            var today = DateTime.UtcNow.Date;
+            var streak = 0;
+            var currentDayToCheck = distinctDates.First();
+
+            if (currentDayToCheck < today.AddDays(-1)) return 0;
+
+            foreach (var date in distinctDates)
+            {
+                if (date == today.AddDays(-streak) || date == today.AddDays(-streak - 1))
+                {
+                    streak++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return streak;
+        }
     }
 
     public record UpdateUserDto(string DisplayName);
