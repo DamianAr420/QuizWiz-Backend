@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using QuizWiz_Backend.Classes;
 using QuizWiz_Backend.Data;
+using QuizWiz_Backend.DTOs;
 using System.Security.Claims;
 
 namespace QuizWiz_Backend.Controllers
@@ -12,26 +12,30 @@ namespace QuizWiz_Backend.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
+        private readonly IImageService _imageService;
         private readonly AppDbContext _context;
 
-        public UsersController(AppDbContext context)
+        public UsersController(AppDbContext context, IImageService imageService)
         {
+            _imageService = imageService;
             _context = context;
         }
 
         [HttpGet("me")]
         public async Task<IActionResult> GetCurrentUser()
         {
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int id))
-            {
-                return Unauthorized(new { message = "Nieprawidłowy token." });
-            }
+            var userId = GetCurrentUserId();
 
             var user = await _context.Users
-                .Select(u => new { u.Id, u.DisplayName, u.Email, u.CreatedAt, u.AvatarUrl, u.Role })
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .Where(u => u.Id == userId)
+                .Select(u => new UserDto(
+                    u.Id,
+                    u.DisplayName,
+                    u.Email,
+                    u.Role,
+                    u.CloudinaryPublicId
+                ))
+                .FirstOrDefaultAsync();
 
             if (user == null) return NotFound();
 
@@ -41,7 +45,7 @@ namespace QuizWiz_Backend.Controllers
         [HttpPut("update-profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto dto)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = GetCurrentUserId();
             var user = await _context.Users.FindAsync(userId);
 
             if (user == null) return NotFound();
@@ -50,13 +54,13 @@ namespace QuizWiz_Backend.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { user.Id, user.DisplayName, user.Email });
+            return Ok(new UserDto(user.Id, user.DisplayName, user.Email, user.Role, user.CloudinaryPublicId));
         }
 
         [HttpDelete("delete-account")]
         public async Task<IActionResult> DeleteAccount()
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = GetCurrentUserId();
             var user = await _context.Users.FindAsync(userId);
 
             if (user == null) return NotFound();
@@ -70,8 +74,7 @@ namespace QuizWiz_Backend.Controllers
         [HttpGet("stats")]
         public async Task<IActionResult> GetUserStats()
         {
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim, out int userId)) return Unauthorized();
+            var userId = GetCurrentUserId();
 
             var statsQuery = await _context.QuizAttempts
                 .Where(a => a.UserId == userId)
@@ -107,41 +110,23 @@ namespace QuizWiz_Backend.Controllers
         [HttpPost("upload-avatar")]
         public async Task<IActionResult> UploadAvatar(IFormFile file)
         {
-            if (file == null || file.Length == 0) return BadRequest("Brak pliku.");
-
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            var extension = Path.GetExtension(file.FileName).ToLower();
-            if (!allowedExtensions.Contains(extension)) return BadRequest("Niepoprawny format.");
-
-            var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/avatars");
-            if (!Directory.Exists(uploadFolder))
-            {
-                Directory.CreateDirectory(uploadFolder);
-            }
-
-            var fileName = $"{Guid.NewGuid()}{extension}";
-            var path = Path.Combine(uploadFolder, fileName);
-
-            using (var stream = new FileStream(path, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
             var userId = GetCurrentUserId();
             var user = await _context.Users.FindAsync(userId);
 
-            if (user == null) return NotFound();
+            if (user == null) return NotFound("Użytkownik nie istnieje");
 
-            if (!string.IsNullOrEmpty(user.AvatarUrl))
+            if (!string.IsNullOrEmpty(user.CloudinaryPublicId))
             {
-                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.AvatarUrl.TrimStart('/'));
-                if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+                await _imageService.DeleteImageAsync(user.CloudinaryPublicId);
             }
 
-            user.AvatarUrl = $"/uploads/avatars/{fileName}";
+            var uploadResult = await _imageService.UploadImageAsync(file);
+            if (uploadResult.Error != null) return BadRequest(uploadResult.Error.Message);
+
+            user.CloudinaryPublicId = uploadResult.PublicId;
             await _context.SaveChangesAsync();
 
-            return Ok(new { url = user.AvatarUrl });
+            return Ok(new { publicId = user.CloudinaryPublicId });
         }
 
         private int CalculateStreakFromDates(List<DateTime> dates)
@@ -156,9 +141,9 @@ namespace QuizWiz_Backend.Controllers
 
             var today = DateTime.UtcNow.Date;
             var streak = 0;
-            var currentDayToCheck = distinctDates.First();
+            var firstDate = distinctDates.First();
 
-            if (currentDayToCheck < today.AddDays(-1)) return 0;
+            if (firstDate < today.AddDays(-1)) return 0;
 
             foreach (var date in distinctDates)
             {
@@ -178,9 +163,11 @@ namespace QuizWiz_Backend.Controllers
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return int.Parse(userIdClaim!);
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                throw new UnauthorizedAccessException("Brak identyfikatora użytkownika w tokenie.");
+            }
+            return int.Parse(userIdClaim);
         }
     }
-
-    public record UpdateUserDto(string DisplayName);
 }

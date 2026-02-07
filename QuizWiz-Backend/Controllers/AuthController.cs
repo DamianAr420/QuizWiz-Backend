@@ -45,7 +45,7 @@ namespace QuizWiz_Backend.Controllers
             await _context.SaveChangesAsync();
 
             var token = CreateToken(user);
-            var userDto = new UserDto(user.Id, user.DisplayName, user.Email, user.Role);
+            var userDto = new UserDto(user.Id, user.DisplayName, user.Email, user.Role, user.CloudinaryPublicId);
 
             return Ok(new AuthResponseDto(userDto, token));
         }
@@ -60,7 +60,7 @@ namespace QuizWiz_Backend.Controllers
                 return Unauthorized(new { message = "Nieprawidłowe dane logowania." });
 
             var token = CreateToken(user);
-            var userDto = new UserDto(user.Id, user.DisplayName, user.Email, user.Role);
+            var userDto = new UserDto(user.Id, user.DisplayName, user.Email, user.Role, user.CloudinaryPublicId);
 
             return Ok(new AuthResponseDto(userDto, token));
         }

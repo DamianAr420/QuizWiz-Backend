@@ -1,7 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using QuizWiz_Backend.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using QuizWiz_Backend.Services;
+using QuizWiz_Backend.Data;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +39,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
+
+builder.Services.AddScoped<IImageService, CloudinaryService>();
 
 var app = builder.Build();
 

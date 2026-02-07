@@ -15,7 +15,7 @@ namespace QuizWiz_Backend.Classes
         public string PasswordHash { get; set; } = string.Empty;
         [Required]
         public string Role { get; set; } = "User";
-        public string? AvatarUrl { get; set; }
+        public string? CloudinaryPublicId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
