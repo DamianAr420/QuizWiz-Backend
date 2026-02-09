@@ -33,7 +33,8 @@ namespace QuizWiz_Backend.Controllers
                     u.DisplayName,
                     u.Email,
                     u.Role,
-                    u.CloudinaryPublicId
+                    u.CloudinaryPublicId,
+                    u.CreatedAt
                 ))
                 .FirstOrDefaultAsync();
 
@@ -54,7 +55,14 @@ namespace QuizWiz_Backend.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(new UserDto(user.Id, user.DisplayName, user.Email, user.Role, user.CloudinaryPublicId));
+            return Ok(new UserDto(
+                user.Id, 
+                user.DisplayName, 
+                user.Email, 
+                user.Role, 
+                user.CloudinaryPublicId, 
+                user.CreatedAt
+            ));
         }
 
         [HttpDelete("delete-account")]
