@@ -11,8 +11,6 @@ TestResults/
 nupkg/
 *.db
 *.db-journal
-appsettings.json
-appsettings.Development.json
 dist/
 node_modules/
 .env
