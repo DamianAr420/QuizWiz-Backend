@@ -17,5 +17,8 @@ namespace QuizWiz_Backend.Classes
         public string Role { get; set; } = "User";
         public string? CloudinaryPublicId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public int Points { get; set; } = 0;
+        public int Experience { get; set; } = 0;
+        public int Level => (Experience / 1000) + 1;
     }
 }

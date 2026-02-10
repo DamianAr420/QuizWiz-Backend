@@ -12,6 +12,8 @@ namespace QuizWiz_Backend.Data
         public DbSet<Quiz> Quizzes => Set<Quiz>();
         public DbSet<Question> Questions => Set<Question>();
         public DbSet<QuizAttempt> QuizAttempts { get; set; }
+        public DbSet<ShopItem> ShopItems { get; set; }
+        public DbSet<UserInventory> UserInventories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

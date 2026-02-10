@@ -51,7 +51,10 @@ namespace QuizWiz_Backend.Controllers
                 user.Email, 
                 user.Role, 
                 user.CloudinaryPublicId, 
-                user.CreatedAt
+                user.CreatedAt,
+                user.Points,
+                user.Experience,
+                user.Level
             );
 
             return Ok(new AuthResponseDto(userDto, token));
@@ -73,7 +76,10 @@ namespace QuizWiz_Backend.Controllers
                 user.Email, 
                 user.Role, 
                 user.CloudinaryPublicId,
-                user.CreatedAt
+                user.CreatedAt,
+                user.Points,
+                user.Experience,
+                user.Level
             );
 
             return Ok(new AuthResponseDto(userDto, token));

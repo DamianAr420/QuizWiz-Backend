@@ -120,11 +120,28 @@ namespace QuizWiz_Backend.Controllers
             if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                 return Unauthorized();
 
-            var quizExists = await _context.Quizzes.AnyAsync(q => q.Id == id);
-            if (!quizExists) return NotFound("Quiz nie istnieje.");
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
 
-            if (dto.Score > dto.TotalQuestions)
-                return BadRequest("Wynik nie może być wyższy niż liczba pytań.");
+            var quiz = await _context.Quizzes.FindAsync(id);
+            if (quiz == null) return NotFound();
+
+            int expPerCorrect = 25;
+            int pointsPerCorrect = 5;
+            int perfectScoreBonus = 100;
+
+            int gainedExp = dto.Score * expPerCorrect;
+            int gainedPoints = dto.Score * pointsPerCorrect;
+
+            if (dto.Score == dto.TotalQuestions && dto.TotalQuestions > 0)
+            {
+                gainedExp += perfectScoreBonus;
+                gainedPoints += 25;
+            }
+
+            int levelBefore = user.Level;
+            user.Experience += gainedExp;
+            user.Points += gainedPoints;
 
             var attempt = new QuizAttempt
             {
@@ -138,7 +155,15 @@ namespace QuizWiz_Backend.Controllers
             _context.QuizAttempts.Add(attempt);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Wynik zapisany pomyślnie!" });
+            return Ok(new
+            {
+                pointsGained = gainedPoints,
+                xpGained = gainedExp,
+                newTotalPoints = user.Points,
+                newExperience = user.Experience,
+                currentLevel = user.Level,
+                isLevelUp = user.Level > levelBefore
+            });
         }
     }
 }

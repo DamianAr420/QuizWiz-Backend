@@ -34,7 +34,10 @@ namespace QuizWiz_Backend.Controllers
                     u.Email,
                     u.Role,
                     u.CloudinaryPublicId,
-                    u.CreatedAt
+                    u.CreatedAt,
+                    u.Points,
+                    u.Experience,
+                    u.Level
                 ))
                 .FirstOrDefaultAsync();
 
@@ -61,7 +64,10 @@ namespace QuizWiz_Backend.Controllers
                 user.Email, 
                 user.Role, 
                 user.CloudinaryPublicId, 
-                user.CreatedAt
+                user.CreatedAt,
+                user.Points,
+                user.Experience,
+                user.Level
             ));
         }
 
@@ -171,11 +177,11 @@ namespace QuizWiz_Backend.Controllers
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdClaim))
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
             {
-                throw new UnauthorizedAccessException("Brak identyfikatora użytkownika w tokenie.");
+                throw new UnauthorizedAccessException("Brak poprawnego identyfikatora użytkownika.");
             }
-            return int.Parse(userIdClaim);
+            return userId;
         }
     }
 }
