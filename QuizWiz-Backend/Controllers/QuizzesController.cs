@@ -29,8 +29,17 @@ namespace QuizWiz_Backend.Controllers
                     (userId != null && q.AuthorId == userId)
                 )
                 .Select(q => new QuizListDto(
-                    q.Id, q.Title, q.Description, q.Questions.Count,
-                    q.TimeLimitSeconds, q.IsOfficial, q.IsVisible, q.IsPlayable, q.AuthorId))
+                    q.Id, 
+                    q.Title, 
+                    q.Description, 
+                    q.Questions.Count,
+                    q.TimeLimitSeconds, 
+                    q.IsOfficial, 
+                    q.IsVisible, 
+                    q.IsPlayable, 
+                    q.AuthorId,
+                    q.IsVerified
+                    ))
                 .ToListAsync();
         }
 
@@ -85,6 +94,12 @@ namespace QuizWiz_Backend.Controllers
             quiz.IsVisible = dto.IsVisible;
             quiz.IsPlayable = dto.IsPlayable;
 
+            if (User.IsInRole("Admin"))
+            {
+                quiz.IsOfficial = dto.IsOfficial;
+                quiz.IsVerified = dto.IsVerified;
+            }
+
             quiz.Questions.Clear();
             quiz.Questions.AddRange(dto.Questions.Select(q => new Question
             {
@@ -117,26 +132,38 @@ namespace QuizWiz_Backend.Controllers
         public async Task<IActionResult> SubmitResult(int id, [FromBody] SubmitResultDto dto)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-                return Unauthorized();
+            if (!int.TryParse(userIdString, out int userId)) return Unauthorized();
 
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) return NotFound();
-
             var quiz = await _context.Quizzes.FindAsync(id);
-            if (quiz == null) return NotFound();
+            if (user == null || quiz == null) return NotFound();
+
+            double typeMultiplier = (quiz.IsOfficial || quiz.IsVerified) ? 1.0 : 0.2;
+
+            var today = DateTime.UtcNow.Date;
+            bool alreadyDoneToday = await _context.QuizAttempts
+                .AnyAsync(a => a.UserId == userId && a.QuizId == id && a.CompletedAt >= today);
+
+            double repeatMultiplier = 1.0;
+            bool canGetPerfectBonus = true;
+
+            if (alreadyDoneToday)
+            {
+                repeatMultiplier = 0.4;
+                canGetPerfectBonus = false;
+            }
 
             int expPerCorrect = 25;
             int pointsPerCorrect = 5;
             int perfectScoreBonus = 100;
 
-            int gainedExp = dto.Score * expPerCorrect;
-            int gainedPoints = dto.Score * pointsPerCorrect;
+            int gainedExp = (int)(dto.Score * expPerCorrect * typeMultiplier * repeatMultiplier);
+            int gainedPoints = (int)(dto.Score * pointsPerCorrect * typeMultiplier * repeatMultiplier);
 
-            if (dto.Score == dto.TotalQuestions && dto.TotalQuestions > 0)
+            if (canGetPerfectBonus && dto.Score == dto.TotalQuestions && dto.TotalQuestions >= 3)
             {
-                gainedExp += perfectScoreBonus;
-                gainedPoints += 25;
+                gainedExp += (int)(perfectScoreBonus * typeMultiplier);
+                gainedPoints += (int)(25 * typeMultiplier);
             }
 
             int levelBefore = user.Level;
@@ -159,11 +186,22 @@ namespace QuizWiz_Backend.Controllers
             {
                 pointsGained = gainedPoints,
                 xpGained = gainedExp,
-                newTotalPoints = user.Points,
-                newExperience = user.Experience,
-                currentLevel = user.Level,
-                isLevelUp = user.Level > levelBefore
+                isLevelUp = user.Level > levelBefore,
+                currentLevel = user.Level
             });
+        }
+
+        [HttpPatch("{id}/verify")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> VerifyQuiz(int id, [FromBody] bool isVerified)
+        {
+            var quiz = await _context.Quizzes.FindAsync(id);
+            if (quiz == null) return NotFound();
+
+            quiz.IsVerified = isVerified;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { id, isVerified, message = "Status weryfikacji zaktualizowany." });
         }
     }
 }
