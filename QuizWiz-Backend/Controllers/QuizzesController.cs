@@ -187,7 +187,9 @@ namespace QuizWiz_Backend.Controllers
                 pointsGained = gainedPoints,
                 xpGained = gainedExp,
                 isLevelUp = user.Level > levelBefore,
-                currentLevel = user.Level
+                currentLevel = user.Level,
+                totalPoints = user.Points,
+                totalExperience = user.Experience
             });
         }
 
