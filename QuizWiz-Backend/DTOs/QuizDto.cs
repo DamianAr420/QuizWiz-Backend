@@ -32,7 +32,8 @@
         bool IsVisible, 
         bool IsPlayable, 
         string? AuthorId,
-        bool IsVerified
+        bool IsVerified,
+        bool IsCompletedToday
     );
     public record SubmitResultDto(int Score, int TotalQuestions);
 }
