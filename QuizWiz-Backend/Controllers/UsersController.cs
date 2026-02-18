@@ -34,6 +34,8 @@ namespace QuizWiz_Backend.Controllers
                     u.Email,
                     u.Role,
                     u.CloudinaryPublicId,
+                    u.SelectedFrame,
+                    u.SelectedBackground,
                     u.CreatedAt,
                     u.Points,
                     u.Experience,
@@ -55,15 +57,19 @@ namespace QuizWiz_Backend.Controllers
             if (user == null) return NotFound();
 
             user.DisplayName = dto.DisplayName;
+            user.SelectedFrame = dto.SelectedFrame;
+            user.SelectedBackground = dto.SelectedBackground;
 
             await _context.SaveChangesAsync();
 
             return Ok(new UserDto(
-                user.Id, 
-                user.DisplayName, 
-                user.Email, 
-                user.Role, 
-                user.CloudinaryPublicId, 
+                user.Id,
+                user.DisplayName,
+                user.Email,
+                user.Role,
+                user.CloudinaryPublicId,
+                user.SelectedFrame,
+                user.SelectedBackground,
                 user.CreatedAt,
                 user.Points,
                 user.Experience,

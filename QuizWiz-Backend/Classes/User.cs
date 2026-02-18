@@ -20,5 +20,7 @@ namespace QuizWiz_Backend.Classes
         public int Points { get; set; } = 0;
         public int Experience { get; set; } = 0;
         public int Level => (Experience / 1000) + 1;
+        public string? SelectedFrame { get; set; }
+        public string? SelectedBackground { get; set; }
     }
 }

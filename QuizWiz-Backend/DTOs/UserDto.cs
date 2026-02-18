@@ -6,10 +6,16 @@
         string Email,
         string Role,
         string? CloudinaryPublicId,
+        string? SelectedFrame,
+        string? SelectedBackground,
         DateTime CreatedAt,
         int Points,
         int Experience,
         int Level
     );
-    public record UpdateUserDto(string DisplayName);
+    public record UpdateUserDto(
+        string DisplayName,
+        string? SelectedFrame,
+        string? SelectedBackground
+    );
 }
