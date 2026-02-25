@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -15,18 +16,18 @@ namespace QuizWiz_Backend.Migrations
                 name: "quizzes",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    timelimitseconds = table.Column<int>(type: "int", nullable: false),
-                    maxquestions = table.Column<int>(type: "int", nullable: false),
-                    isofficial = table.Column<bool>(type: "bit", nullable: false),
-                    isvisible = table.Column<bool>(type: "bit", nullable: false),
-                    isplayable = table.Column<bool>(type: "bit", nullable: false),
-                    isverified = table.Column<bool>(type: "bit", nullable: false),
-                    authorid = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    createdat = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    title = table.Column<string>(type: "text", nullable: false),
+                    description = table.Column<string>(type: "text", nullable: false),
+                    timelimitseconds = table.Column<int>(type: "integer", nullable: false),
+                    maxquestions = table.Column<int>(type: "integer", nullable: false),
+                    isofficial = table.Column<bool>(type: "boolean", nullable: false),
+                    isvisible = table.Column<bool>(type: "boolean", nullable: false),
+                    isplayable = table.Column<bool>(type: "boolean", nullable: false),
+                    isverified = table.Column<bool>(type: "boolean", nullable: false),
+                    authorid = table.Column<string>(type: "text", nullable: true),
+                    createdat = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -37,17 +38,17 @@ namespace QuizWiz_Backend.Migrations
                 name: "shopitems",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    price = table.Column<int>(type: "int", nullable: false),
-                    type = table.Column<int>(type: "int", nullable: false),
-                    imageurl = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    createdat = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    rarity = table.Column<int>(type: "int", nullable: false),
-                    stockquantity = table.Column<int>(type: "int", nullable: true),
-                    requiredlevel = table.Column<int>(type: "int", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    title = table.Column<string>(type: "text", nullable: false),
+                    description = table.Column<string>(type: "text", nullable: false),
+                    price = table.Column<int>(type: "integer", nullable: false),
+                    type = table.Column<int>(type: "integer", nullable: false),
+                    imageurl = table.Column<string>(type: "text", nullable: true),
+                    createdat = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    rarity = table.Column<int>(type: "integer", nullable: false),
+                    stockquantity = table.Column<int>(type: "integer", nullable: true),
+                    requiredlevel = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -58,18 +59,18 @@ namespace QuizWiz_Backend.Migrations
                 name: "users",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    displayname = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    email = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    passwordhash = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    role = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    cloudinarypublicid = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    createdat = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    points = table.Column<int>(type: "int", nullable: false),
-                    experience = table.Column<int>(type: "int", nullable: false),
-                    selectedframe = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    selectedbackground = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    displayname = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    email = table.Column<string>(type: "text", nullable: false),
+                    passwordhash = table.Column<string>(type: "text", nullable: false),
+                    role = table.Column<string>(type: "text", nullable: false),
+                    cloudinarypublicid = table.Column<string>(type: "text", nullable: true),
+                    createdat = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    points = table.Column<int>(type: "integer", nullable: false),
+                    experience = table.Column<int>(type: "integer", nullable: false),
+                    selectedframe = table.Column<string>(type: "text", nullable: true),
+                    selectedbackground = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -80,12 +81,12 @@ namespace QuizWiz_Backend.Migrations
                 name: "questions",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    correctanswer = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    text = table.Column<string>(type: "text", nullable: false),
+                    correctanswer = table.Column<string>(type: "text", nullable: false),
                     distractors = table.Column<string>(type: "jsonb", nullable: false),
-                    quizid = table.Column<int>(type: "int", nullable: false)
+                    quizid = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -102,11 +103,11 @@ namespace QuizWiz_Backend.Migrations
                 name: "userinventories",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    userid = table.Column<int>(type: "int", nullable: false),
-                    shopitemid = table.Column<int>(type: "int", nullable: false),
-                    purchasedat = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    userid = table.Column<int>(type: "integer", nullable: false),
+                    shopitemid = table.Column<int>(type: "integer", nullable: false),
+                    purchasedat = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -123,13 +124,13 @@ namespace QuizWiz_Backend.Migrations
                 name: "quizattempts",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    userid = table.Column<int>(type: "int", nullable: false),
-                    quizid = table.Column<int>(type: "int", nullable: false),
-                    score = table.Column<int>(type: "int", nullable: false),
-                    totalquestions = table.Column<int>(type: "int", nullable: false),
-                    completedat = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    userid = table.Column<int>(type: "integer", nullable: false),
+                    quizid = table.Column<int>(type: "integer", nullable: false),
+                    score = table.Column<int>(type: "integer", nullable: false),
+                    totalquestions = table.Column<int>(type: "integer", nullable: false),
+                    completedat = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
