@@ -12,4 +12,4 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-ENTRYPOINT ["dotnet", "QuizWiz_Backend.dll"]
+ENTRYPOINT ["dotnet", "QuizWiz-Backend.dll"]
