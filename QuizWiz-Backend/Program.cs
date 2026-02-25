@@ -20,6 +20,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+Console.WriteLine($"[CORS] Dozwolone źródła: {string.Join(", ", allowedOrigins)}");
 
 builder.Services.AddCors(options =>
 {
