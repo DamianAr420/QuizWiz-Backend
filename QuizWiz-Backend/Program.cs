@@ -68,7 +68,7 @@ if (app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseCors("AllowVueApp");
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
