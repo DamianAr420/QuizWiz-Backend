@@ -11,6 +11,7 @@
         public bool IsVisible { get; set; } = true;
         public bool IsPlayable { get; set; } = true;
         public bool IsVerified { get; set; }
+        public bool IsSubmitted { get; set; } = false;
         public string? AuthorId { get; set; }
         public List<Question> Questions { get; set; } = new();
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

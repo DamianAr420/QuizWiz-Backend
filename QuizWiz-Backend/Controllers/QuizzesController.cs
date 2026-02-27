@@ -37,6 +37,7 @@ namespace QuizWiz_Backend.Controllers
                     q.IsPlayable,
                     q.AuthorId,
                     q.IsVerified,
+                    q.IsSubmitted,
                     userId != 0 && _context.QuizAttempts.Any(a => a.QuizId == q.Id && a.UserId == userId && a.CompletedAt >= today)
                 ))
                 .ToListAsync();
@@ -77,6 +78,7 @@ namespace QuizWiz_Backend.Controllers
             await _context.SaveChangesAsync();
             return Ok(quiz);
         }
+
         [HttpPut("{id}")]
         [Authorize]
         public async Task<IActionResult> UpdateQuiz(int id, [FromBody] UpdateQuizDto dto)
@@ -84,7 +86,10 @@ namespace QuizWiz_Backend.Controllers
             var quiz = await _context.Quizzes.Include(q => q.Questions).FirstOrDefaultAsync(q => q.Id == id);
             if (quiz == null) return NotFound();
 
-            if (quiz.AuthorId != User.FindFirstValue(ClaimTypes.NameIdentifier) && !User.IsInRole("Admin"))
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            if (quiz.AuthorId != userId && !isAdmin)
                 return Forbid();
 
             quiz.Title = dto.Title;
@@ -93,10 +98,15 @@ namespace QuizWiz_Backend.Controllers
             quiz.IsVisible = dto.IsVisible;
             quiz.IsPlayable = dto.IsPlayable;
 
-            if (User.IsInRole("Admin"))
+            if (isAdmin)
             {
                 quiz.IsOfficial = dto.IsOfficial;
                 quiz.IsVerified = dto.IsVerified;
+            }
+            else
+            {
+                quiz.IsVerified = false;
+                quiz.IsOfficial = false;
             }
 
             quiz.Questions.Clear();
@@ -203,6 +213,25 @@ namespace QuizWiz_Backend.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { id, isVerified, message = "Status weryfikacji zaktualizowany." });
+        }
+
+        [HttpPost("{id}/sendVerifyReq")]
+        [Authorize]
+        public async Task<IActionResult> SubmitQuiz(int id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var quiz = await _context.Quizzes.FindAsync(id);
+            if (quiz == null) return NotFound();
+
+            if (quiz.AuthorId != userId) return Forbid();
+
+            if (quiz.IsSubmitted) return BadRequest("Quiz został już zgłoszony.");
+
+            quiz.IsSubmitted = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Quiz zgłoszony do weryfikacji." });
         }
     }
 }

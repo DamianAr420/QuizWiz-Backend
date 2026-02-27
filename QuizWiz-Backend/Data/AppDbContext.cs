@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using QuizWiz_Backend.Classes;
 using System.Text.Json;
 
@@ -43,11 +44,15 @@ namespace QuizWiz_Backend.Data
 
             modelBuilder.Entity<Question>()
                 .Property(q => q.Distractors)
-                .HasColumnType("jsonb")
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
                     v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!) ?? new List<string>()
-                );
+                )
+                .Metadata
+                .SetValueComparer(new ValueComparer<List<string>>(
+                    (c1, c2) => c1.SequenceEqual(c2),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    c => c.ToList()));
 
             modelBuilder.Entity<Quiz>()
                 .HasMany(q => q.Questions)

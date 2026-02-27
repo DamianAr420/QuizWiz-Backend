@@ -2,8 +2,8 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuizWiz_Backend.Data;
 
 #nullable disable
@@ -18,36 +18,36 @@ namespace QuizWiz_Backend.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.0")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("QuizWiz_Backend.Classes.Question", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CorrectAnswer")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("correctanswer");
 
                     b.Property<string>("Distractors")
                         .IsRequired()
-                        .HasColumnType("jsonb")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("distractors");
 
                     b.Property<int>("QuizId")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("quizid");
 
                     b.Property<string>("Text")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("text");
 
                     b.HasKey("Id");
@@ -61,51 +61,55 @@ namespace QuizWiz_Backend.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AuthorId")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("authorid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("datetime2")
                         .HasColumnName("createdat");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
                     b.Property<bool>("IsOfficial")
-                        .HasColumnType("boolean")
+                        .HasColumnType("bit")
                         .HasColumnName("isofficial");
 
                     b.Property<bool>("IsPlayable")
-                        .HasColumnType("boolean")
+                        .HasColumnType("bit")
                         .HasColumnName("isplayable");
 
+                    b.Property<bool>("IsSubmitted")
+                        .HasColumnType("bit")
+                        .HasColumnName("issubmitted");
+
                     b.Property<bool>("IsVerified")
-                        .HasColumnType("boolean")
+                        .HasColumnType("bit")
                         .HasColumnName("isverified");
 
                     b.Property<bool>("IsVisible")
-                        .HasColumnType("boolean")
+                        .HasColumnType("bit")
                         .HasColumnName("isvisible");
 
                     b.Property<int>("MaxQuestions")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("maxquestions");
 
                     b.Property<int>("TimeLimitSeconds")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("timelimitseconds");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("title");
 
                     b.HasKey("Id");
@@ -117,29 +121,29 @@ namespace QuizWiz_Backend.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CompletedAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("datetime2")
                         .HasColumnName("completedat");
 
                     b.Property<int>("QuizId")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("quizid");
 
                     b.Property<int>("Score")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("score");
 
                     b.Property<int>("TotalQuestions")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("totalquestions");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("userid");
 
                     b.HasKey("Id");
@@ -155,47 +159,47 @@ namespace QuizWiz_Backend.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("datetime2")
                         .HasColumnName("createdat");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
                     b.Property<string>("ImageUrl")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("imageurl");
 
                     b.Property<int>("Price")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("price");
 
                     b.Property<int>("Rarity")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("rarity");
 
                     b.Property<int>("RequiredLevel")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("requiredlevel");
 
                     b.Property<int?>("StockQuantity")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("stockquantity");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("title");
 
                     b.Property<int>("Type")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("type");
 
                     b.HasKey("Id");
@@ -207,54 +211,54 @@ namespace QuizWiz_Backend.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CloudinaryPublicId")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("cloudinarypublicid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("datetime2")
                         .HasColumnName("createdat");
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasColumnType("nvarchar(50)")
                         .HasColumnName("displayname");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnName("email");
 
                     b.Property<int>("Experience")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("experience");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("passwordhash");
 
                     b.Property<int>("Points")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("points");
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("role");
 
                     b.Property<string>("SelectedBackground")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("selectedbackground");
 
                     b.Property<string>("SelectedFrame")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("selectedframe");
 
                     b.HasKey("Id");
@@ -272,21 +276,21 @@ namespace QuizWiz_Backend.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("PurchasedAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("datetime2")
                         .HasColumnName("purchasedat");
 
                     b.Property<int>("ShopItemId")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("shopitemid");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasColumnName("userid");
 
                     b.HasKey("Id");
