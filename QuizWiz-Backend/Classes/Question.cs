@@ -1,10 +1,13 @@
-﻿namespace QuizWiz_Backend.Classes
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace QuizWiz_Backend.Classes
 {
     public class Question
     {
         public int Id { get; set; }
         public required string Text { get; set; }
         public required string CorrectAnswer { get; set; }
+        [Column(TypeName = "jsonb")]
         public List<string> Distractors { get; set; } = new();
         public int QuizId { get; set; }
     }
