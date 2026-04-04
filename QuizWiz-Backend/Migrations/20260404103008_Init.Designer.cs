@@ -12,8 +12,8 @@ using QuizWiz_Backend.Data;
 namespace QuizWiz_Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260227174535_init")]
-    partial class init
+    [Migration("20260404103008_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
