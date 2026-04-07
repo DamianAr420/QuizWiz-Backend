@@ -28,8 +28,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-Console.WriteLine($"[CORS] Dozwolone źródła: {string.Join(", ", allowedOrigins)}");
+var originsFromConfig = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+var singleOrigin = builder.Configuration["AllowedOrigins"];
+
+string[] allowedOrigins = (originsFromConfig is { Length: > 0 })
+    ? originsFromConfig
+    : (!string.IsNullOrEmpty(singleOrigin) ? [singleOrigin] : []);
+
+if (allowedOrigins.Length == 0)
+{
+    Console.WriteLine("[WARNING] AllowedOrigins is empty! CORS might block requests.");
+}
+else
+{
+    Console.WriteLine($"[CORS] Dozwolone źródła: {string.Join(", ", allowedOrigins)}");
+}
 
 builder.Services.AddCors(options =>
 {
@@ -43,14 +56,16 @@ builder.Services.AddCors(options =>
         });
 });
 
+var tokenKey = builder.Configuration["AppSettings:Token"]
+    ?? throw new InvalidOperationException("JWT Token Key is missing!");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
-                .GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value!)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey)),
             ValidateIssuer = false,
             ValidateAudience = false,
             ClockSkew = TimeSpan.Zero
