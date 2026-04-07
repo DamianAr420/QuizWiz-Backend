@@ -7,6 +7,7 @@ using QuizWiz_Backend.DTOs;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 
 namespace QuizWiz_Backend.Controllers;
 
@@ -14,16 +15,17 @@ namespace QuizWiz_Backend.Controllers;
 [Route("api/[controller]")]
 public class AuthController(AppDbContext context, IConfiguration config) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
         var email = dto.Email.Trim();
         var displayName = dto.DisplayName.Trim();
 
-        if (await context.Users.AnyAsync(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)))
+        if (await context.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower()))
             return BadRequest(new { message = "Ten adres email jest już zajęty." });
 
-        if (await context.Users.AnyAsync(u => u.DisplayName.Equals(displayName, StringComparison.OrdinalIgnoreCase)))
+        if (await context.Users.AnyAsync(u => u.DisplayName.ToLower() == displayName.ToLower()))
             return BadRequest(new { message = "Ta nazwa użytkownika jest już zajęta." });
 
         var user = new User
@@ -42,14 +44,15 @@ public class AuthController(AppDbContext context, IConfiguration config) : Contr
         return Ok(new AuthResponseDto(MapToUserDto(user), token));
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         var identifier = dto.Identifier.Trim();
 
         var user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email.Equals(identifier, StringComparison.OrdinalIgnoreCase)
-                                   || u.DisplayName.Equals(identifier, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == identifier.ToLower()
+                                   || u.DisplayName.ToLower() == identifier.ToLower());
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Nieprawidłowe dane logowania." });
@@ -77,15 +80,15 @@ public class AuthController(AppDbContext context, IConfiguration config) : Contr
 
     private string CreateToken(User user)
     {
-        List<Claim> claims = [
+        var claims = new List<Claim> {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Name, user.DisplayName),
             new(ClaimTypes.Role, user.Role)
-        ];
+        };
 
-        var tokenKey = config.GetSection("AppSettings:Token").Value
-            ?? throw new Exception("JWT Token Key is missing in appsettings.json");
+        var tokenKey = config["AppSettings:Token"]
+            ?? throw new InvalidOperationException("JWT Token Key is missing!");
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
