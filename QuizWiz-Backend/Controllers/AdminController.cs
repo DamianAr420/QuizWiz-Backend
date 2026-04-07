@@ -13,20 +13,37 @@ namespace QuizWiz_Backend.Controllers
     public class AdminController(AppDbContext context) : ControllerBase
     {
         [HttpGet("users")]
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers([FromQuery] string? search)
+        public async Task<ActionResult<PagedResultDto<User>>> GetAllUsers(
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
             var query = context.Users.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var pattern = $"%{search}%";
-
                 query = query.Where(u =>
                     EF.Functions.Like(u.DisplayName, pattern) ||
                     EF.Functions.Like(u.Email, pattern));
             }
 
-            return await query.ToListAsync();
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            var items = await query
+                .OrderBy(u => u.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new PagedResultDto<User>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                CurrentPage = page
+            });
         }
 
         [HttpPut("users/{id}")]

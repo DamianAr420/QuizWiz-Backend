@@ -20,4 +20,12 @@
         public int? StockQuantity { get; set; }
         public int RequiredLevel { get; set; } = 1;
     }
+
+    public class PagedResultDto<T>
+    {
+        public IEnumerable<T> Items { get; set; } = [];
+        public int TotalCount { get; set; }
+        public int TotalPages { get; set; }
+        public int CurrentPage { get; set; }
+    }
 }
