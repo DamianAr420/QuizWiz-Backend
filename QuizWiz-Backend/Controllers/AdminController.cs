@@ -10,25 +10,29 @@ namespace QuizWiz_Backend.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Admin")]
-    public class AdminController : ControllerBase
+    public class AdminController(AppDbContext context) : ControllerBase
     {
-        private readonly AppDbContext _context;
-
-        public AdminController(AppDbContext context)
-        {
-            _context = context;
-        }
-
         [HttpGet("users")]
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers([FromQuery] string? search)
         {
-            return await _context.Users.ToListAsync();
+            var query = context.Users.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var pattern = $"%{search}%";
+
+                query = query.Where(u =>
+                    EF.Functions.Like(u.DisplayName, pattern) ||
+                    EF.Functions.Like(u.Email, pattern));
+            }
+
+            return await query.ToListAsync();
         }
 
         [HttpPut("users/{id}")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UserAdminUpdateDto dto)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await context.Users.FindAsync(id);
             if (user == null) return NotFound("Użytkownik nie istnieje.");
 
             user.DisplayName = dto.DisplayName;
@@ -37,7 +41,7 @@ namespace QuizWiz_Backend.Controllers
             user.Points = dto.Points;
             user.Experience = dto.Experience;
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return Ok(user);
         }
 
@@ -56,8 +60,8 @@ namespace QuizWiz_Backend.Controllers
                 RequiredLevel = dto.RequiredLevel
             };
 
-            _context.ShopItems.Add(newItem);
-            await _context.SaveChangesAsync();
+            context.ShopItems.Add(newItem);
+            await context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(CreateShopItem), new { id = newItem.Id }, newItem);
         }
@@ -65,7 +69,7 @@ namespace QuizWiz_Backend.Controllers
         [HttpPut("shop/{id}")]
         public async Task<IActionResult> UpdateShopItem(int id, [FromBody] ShopItemCreateDto dto)
         {
-            var item = await _context.ShopItems.FindAsync(id);
+            var item = await context.ShopItems.FindAsync(id);
             if (item == null) return NotFound("Przedmiot nie istnieje.");
 
             item.Title = dto.Title;
@@ -77,25 +81,25 @@ namespace QuizWiz_Backend.Controllers
             item.StockQuantity = dto.StockQuantity;
             item.RequiredLevel = dto.RequiredLevel;
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return Ok(item);
         }
 
         [HttpDelete("shop/{id}")]
         public async Task<IActionResult> DeleteShopItem(int id)
         {
-            var item = await _context.ShopItems.FindAsync(id);
+            var item = await context.ShopItems.FindAsync(id);
             if (item == null) return NotFound();
 
-            _context.ShopItems.Remove(item);
-            await _context.SaveChangesAsync();
+            context.ShopItems.Remove(item);
+            await context.SaveChangesAsync();
             return NoContent();
         }
 
         [HttpGet("quizzes/pending")]
         public async Task<ActionResult<IEnumerable<Quiz>>> GetPendingQuizzes()
         {
-            return await _context.Quizzes
+            return await context.Quizzes
                 .Where(q => q.IsSubmitted && !q.IsVerified)
                 .OrderByDescending(q => q.CreatedAt)
                 .Include(q => q.Questions)
@@ -105,25 +109,25 @@ namespace QuizWiz_Backend.Controllers
         [HttpPut("quizzes/{id}/verify")]
         public async Task<IActionResult> VerifyQuiz(int id)
         {
-            var quiz = await _context.Quizzes.FindAsync(id);
+            var quiz = await context.Quizzes.FindAsync(id);
             if (quiz == null) return NotFound("Quiz nie istnieje.");
 
             quiz.IsVerified = true;
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return Ok(new { message = "Quiz został pomyślnie zweryfikowany." });
         }
 
         [HttpDelete("quizzes/{id}/reject")]
         public async Task<IActionResult> RejectQuiz(int id)
         {
-            var quiz = await _context.Quizzes.FindAsync(id);
+            var quiz = await context.Quizzes.FindAsync(id);
             if (quiz == null) return NotFound("Quiz nie istnieje.");
 
             quiz.IsSubmitted = false;
             quiz.IsVerified = false;
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             return Ok(new { message = "Quiz został odrzucony i przywrócony do edycji dla autora." });
         }
