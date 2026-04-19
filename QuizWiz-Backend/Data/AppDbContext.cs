@@ -13,6 +13,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
     public DbSet<ShopItem> ShopItems => Set<ShopItem>();
     public DbSet<UserInventory> UserInventories => Set<UserInventory>();
+    public DbSet<Friendship> Friendships => Set<Friendship>();
+    public DbSet<Message> Messages => Set<Message>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,5 +69,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(qa => qa.Quiz)
             .WithMany()
             .HasForeignKey(qa => qa.QuizId);
+
+        modelBuilder.Entity<Message>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(m => m.ReceiverId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Friendship>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(f => f.RequesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Friendship>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(f => f.AddresseeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

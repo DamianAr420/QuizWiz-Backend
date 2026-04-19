@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuizWiz_Backend.Data;
@@ -11,9 +12,11 @@ using QuizWiz_Backend.Data;
 namespace QuizWiz_Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260418141437_AddChatAndFriends")]
+    partial class AddChatAndFriends
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,27 +29,22 @@ namespace QuizWiz_Backend.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AddresseeId")
-                        .HasColumnType("integer")
-                        .HasColumnName("addresseeid");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("createdat");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("RequesterId")
-                        .HasColumnType("integer")
-                        .HasColumnName("requesterid");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("status");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -54,38 +52,32 @@ namespace QuizWiz_Backend.Migrations
 
                     b.HasIndex("RequesterId");
 
-                    b.ToTable("friendships");
+                    b.ToTable("Friendship");
                 });
 
             modelBuilder.Entity("Message", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content");
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsRead")
-                        .HasColumnType("boolean")
-                        .HasColumnName("isread");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("ReceiverId")
-                        .HasColumnType("integer")
-                        .HasColumnName("receiverid");
+                        .HasColumnType("integer");
 
                     b.Property<int>("SenderId")
-                        .HasColumnType("integer")
-                        .HasColumnName("senderid");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("SentAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("sentat");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -93,7 +85,7 @@ namespace QuizWiz_Backend.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("messages");
+                    b.ToTable("Message");
                 });
 
             modelBuilder.Entity("QuizWiz_Backend.Classes.Question", b =>
