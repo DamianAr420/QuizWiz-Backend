@@ -20,7 +20,17 @@ namespace QuizWiz_Backend.Hubs
         public async Task SendMessage(int receiverId, string content)
         {
             var senderIdString = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(senderIdString, out int senderId)) return;
+            if (string.IsNullOrEmpty(senderIdString) || !int.TryParse(senderIdString, out int senderId))
+            {
+                await Clients.Caller.SendAsync("Error", "UNAUTHORIZED");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                await Clients.Caller.SendAsync("Error", "EMPTY_MESSAGE");
+                return;
+            }
 
             var message = new Message
             {
@@ -31,17 +41,25 @@ namespace QuizWiz_Backend.Hubs
                 IsRead = false
             };
 
-            _context.Messages.Add(message);
-            await _context.SaveChangesAsync();
-
-            await Clients.Users(receiverId.ToString(), senderId.ToString()).SendAsync("ReceiveMessage", new
+            try
             {
-                id = message.Id,
-                senderId = message.SenderId,
-                receiverId = message.ReceiverId,
-                content = message.Content,
-                sentAt = message.SentAt
-            });
+                _context.Messages.Add(message);
+                await _context.SaveChangesAsync();
+
+                await Clients.Users(receiverId.ToString(), senderId.ToString()).SendAsync("ReceiveMessage", new
+                {
+                    id = message.Id,
+                    senderId = message.SenderId,
+                    receiverId = message.ReceiverId,
+                    content = message.Content,
+                    sentAt = message.SentAt,
+                    isRead = false
+                });
+            }
+            catch
+            {
+                await Clients.Caller.SendAsync("Error", "MESSAGE_SAVE_FAILED");
+            }
         }
 
         public async Task MarkAsRead(int friendId)

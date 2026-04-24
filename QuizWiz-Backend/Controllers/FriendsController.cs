@@ -14,10 +14,7 @@ namespace QuizWiz_Backend.Controllers
     {
         private readonly AppDbContext _context;
 
-        public FriendsController(AppDbContext context)
-        {
-            _context = context;
-        }
+        public FriendsController(AppDbContext context) => _context = context;
 
         private int GetCurrentUserId()
         {
@@ -25,65 +22,86 @@ namespace QuizWiz_Backend.Controllers
             return int.TryParse(userIdValue, out int id) ? id : 0;
         }
 
-        [HttpPost("request/{addresseeId}")]
-        public async Task<IActionResult> SendRequest(int addresseeId)
+        [HttpPost("request/{username}")]
+        public async Task<IActionResult> SendRequest(string username)
         {
             var userId = GetCurrentUserId();
-            if (userId == 0) return Unauthorized();
-            if (userId == addresseeId) return BadRequest("Nie możesz zaprosić samego siebie.");
+            if (userId == 0) return Unauthorized(new { code = "UNAUTHORIZED" });
+
+            var addressee = await _context.Users.FirstOrDefaultAsync(u => u.DisplayName == username);
+            if (addressee == null) return NotFound(new { code = "USER_NOT_FOUND" });
+
+            if (userId == addressee.Id) return BadRequest(new { code = "CANNOT_INVITE_SELF" });
 
             var existing = await _context.Friendships
                 .FirstOrDefaultAsync(f =>
-                    (f.RequesterId == userId && f.AddresseeId == addresseeId) ||
-                    (f.RequesterId == addresseeId && f.AddresseeId == userId));
+                    (f.RequesterId == userId && f.AddresseeId == addressee.Id) ||
+                    (f.RequesterId == addressee.Id && f.AddresseeId == userId));
 
-            if (existing != null) return BadRequest("Relacja już istnieje.");
+            if (existing != null) return BadRequest(new { code = "FRIENDSHIP_ALREADY_EXISTS" });
 
-            var friendship = new Friendship
-            {
-                RequesterId = userId,
-                AddresseeId = addresseeId,
-                Status = "Pending"
-            };
-
-            _context.Friendships.Add(friendship);
+            _context.Friendships.Add(new Friendship { RequesterId = userId, AddresseeId = addressee.Id, Status = "Pending" });
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Zaproszenie wysłane." });
+
+            return Ok(new { code = "SUCCESS_REQUEST_SENT" });
         }
 
         [HttpPut("accept/{requesterId}")]
         public async Task<IActionResult> AcceptRequest(int requesterId)
         {
             var userId = GetCurrentUserId();
-            if (userId == 0) return Unauthorized();
+            if (userId == 0) return Unauthorized(new { code = "UNAUTHORIZED" });
 
             var request = await _context.Friendships
                 .FirstOrDefaultAsync(f => f.RequesterId == requesterId && f.AddresseeId == userId && f.Status == "Pending");
 
-            if (request == null) return NotFound("Zaproszenie nie istnieje.");
+            if (request == null) return NotFound(new { code = "REQUEST_NOT_FOUND" });
 
             request.Status = "Accepted";
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Zaakceptowano zaproszenie." });
+            return Ok(new { code = "SUCCESS_REQUEST_ACCEPTED" });
+        }
+
+        [HttpDelete("decline/{requesterId}")]
+        public async Task<IActionResult> DeclineRequest(int requesterId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized(new { code = "UNAUTHORIZED" });
+
+            var request = await _context.Friendships
+                .FirstOrDefaultAsync(f => f.RequesterId == requesterId && f.AddresseeId == userId && f.Status == "Pending");
+
+            if (request == null) return NotFound(new { code = "REQUEST_NOT_FOUND" });
+
+            _context.Friendships.Remove(request);
+            await _context.SaveChangesAsync();
+            return Ok(new { code = "SUCCESS_REQUEST_DECLINED" });
+        }
+
+        [HttpGet("requests")]
+        public async Task<IActionResult> GetPendingRequests()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized(new { code = "UNAUTHORIZED" });
+
+            var requests = await _context.Friendships
+                .Where(f => f.Status == "Pending" && f.AddresseeId == userId)
+                .Join(_context.Users, f => f.RequesterId, u => u.Id, (f, u) => new { senderId = u.Id, senderName = u.DisplayName })
+                .ToListAsync();
+
+            return Ok(requests);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetFriends()
         {
             var userId = GetCurrentUserId();
-            if (userId == 0) return Unauthorized();
+            if (userId == 0) return Unauthorized(new { code = "UNAUTHORIZED" });
 
             var friends = await _context.Friendships
                 .Where(f => f.Status == "Accepted" && (f.RequesterId == userId || f.AddresseeId == userId))
-                .Join(_context.Users,
-                      f => (f.RequesterId == userId ? f.AddresseeId : f.RequesterId),
-                      u => u.Id,
-                      (f, u) => new
-                      {
-                          u.Id,
-                          u.DisplayName,
-                          isOnline = false
-                      })
+                .Join(_context.Users, f => (f.RequesterId == userId ? f.AddresseeId : f.RequesterId), u => u.Id,
+                      (f, u) => new { u.Id, u.DisplayName, isOnline = false })
                 .ToListAsync();
 
             return Ok(friends);
@@ -93,21 +111,12 @@ namespace QuizWiz_Backend.Controllers
         public async Task<IActionResult> GetChatHistory(int friendId)
         {
             var userId = GetCurrentUserId();
-            if (userId == 0) return Unauthorized();
+            if (userId == 0) return Unauthorized(new { code = "UNAUTHORIZED" });
 
             var messages = await _context.Messages
-                .Where(m =>
-                    (m.SenderId == userId && m.ReceiverId == friendId) ||
-                    (m.SenderId == friendId && m.ReceiverId == userId))
+                .Where(m => (m.SenderId == userId && m.ReceiverId == friendId) || (m.SenderId == friendId && m.ReceiverId == userId))
                 .OrderBy(m => m.SentAt)
-                .Select(m => new {
-                    m.Id,
-                    m.SenderId,
-                    m.ReceiverId,
-                    m.Content,
-                    m.SentAt,
-                    m.IsRead
-                })
+                .Select(m => new { m.Id, m.SenderId, m.ReceiverId, m.Content, m.SentAt, m.IsRead })
                 .ToListAsync();
 
             return Ok(messages);
