@@ -23,10 +23,10 @@ public class AuthController(AppDbContext context, IConfiguration config) : Contr
         var displayName = dto.DisplayName.Trim();
 
         if (await context.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower()))
-            return BadRequest(new { message = "Ten adres email jest już zajęty." });
+            return BadRequest(new { code = "EMAIL_TAKEN" });
 
         if (await context.Users.AnyAsync(u => u.DisplayName.ToLower() == displayName.ToLower()))
-            return BadRequest(new { message = "Ta nazwa użytkownika jest już zajęta." });
+            return BadRequest(new { code = "USERNAME_TAKEN" });
 
         var user = new User
         {
@@ -55,7 +55,7 @@ public class AuthController(AppDbContext context, IConfiguration config) : Contr
                                    || u.DisplayName.ToLower() == identifier.ToLower());
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-            return Unauthorized(new { message = "Nieprawidłowe dane logowania." });
+            return Unauthorized(new { code = "INVALID_CREDENTIALS" });
 
         var token = CreateToken(user);
         return Ok(new AuthResponseDto(MapToUserDto(user), token));

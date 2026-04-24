@@ -50,7 +50,7 @@ namespace QuizWiz_Backend.Controllers
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UserAdminUpdateDto dto)
         {
             var user = await context.Users.FindAsync(id);
-            if (user == null) return NotFound("Użytkownik nie istnieje.");
+            if (user == null) return NotFound(new { code = "USER_NOT_FOUND" });
 
             user.DisplayName = dto.DisplayName;
             user.Email = dto.Email;
@@ -87,7 +87,7 @@ namespace QuizWiz_Backend.Controllers
         public async Task<IActionResult> UpdateShopItem(int id, [FromBody] ShopItemCreateDto dto)
         {
             var item = await context.ShopItems.FindAsync(id);
-            if (item == null) return NotFound("Przedmiot nie istnieje.");
+            if (item == null) return NotFound(new { code = "ITEM_NOT_FOUND" });
 
             item.Title = dto.Title;
             item.Description = dto.Description;
@@ -127,12 +127,12 @@ namespace QuizWiz_Backend.Controllers
         public async Task<IActionResult> VerifyQuiz(int id)
         {
             var quiz = await context.Quizzes.FindAsync(id);
-            if (quiz == null) return NotFound("Quiz nie istnieje.");
+            if (quiz == null) return NotFound(new { code = "QUIZ_NOT_FOUND" });
 
             quiz.IsVerified = true;
 
             await context.SaveChangesAsync();
-            return Ok(new { message = "Quiz został pomyślnie zweryfikowany." });
+            return Ok();
         }
 
         [HttpDelete("quizzes/{id}/reject")]

@@ -28,20 +28,22 @@ public class ShopController : ControllerBase
     [HttpPost("purchase/{itemId}")]
     public async Task<IActionResult> PurchaseItem(int itemId)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null) return Unauthorized();
-
-        if (!int.TryParse(userIdClaim, out int userId)) return BadRequest("Invalid User ID");
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdString, out int userId)) return Unauthorized();
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         var item = await _context.ShopItems.FindAsync(itemId);
 
-        if (user == null || item == null) return NotFound();
+        if (user == null) return NotFound(new { code = "USER_NOT_FOUND" });
+        if (item == null) return NotFound(new { code = "ITEM_NOT_FOUND" });
+
+        if (user.Points < item.Price)
+            return BadRequest(new { code = "INSUFFICIENT_FUNDS" });
 
         var alreadyOwned = await _context.UserInventories
             .AnyAsync(ui => ui.UserId == userId && ui.ShopItemId == itemId);
-
-        if (alreadyOwned) return BadRequest("Już to masz!");
+        if (alreadyOwned)
+            return BadRequest(new { code = "ITEM_ALREADY_OWNED" });
 
         user.Points -= item.Price;
 
@@ -52,7 +54,8 @@ public class ShopController : ControllerBase
         });
 
         await _context.SaveChangesAsync();
-        return Ok(new { message = "Sukces!", points = user.Points });
+
+        return Ok(new { message = "Zakup udany", points = user.Points });
     }
 
     [HttpGet("my-inventory")]

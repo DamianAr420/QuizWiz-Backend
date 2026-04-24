@@ -20,7 +20,7 @@ public class RankingController(AppDbContext db) : ControllerBase
             "correctanswers" => Ok(await GetTopByCorrectAnswers()),
             "accuracy" => Ok(await GetTopByAccuracy()),
             "quizzescompleted" => Ok(await GetTopByQuizzesCompleted()),
-            _ => BadRequest("Nieznany ranking.")
+            _ => BadRequest("unknownType")
         };
     }
 

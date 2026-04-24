@@ -126,10 +126,10 @@ namespace QuizWiz_Backend.Controllers
         public async Task<IActionResult> DeleteQuiz(int id)
         {
             var quiz = await _context.Quizzes.FindAsync(id);
-            if (quiz == null) return NotFound();
+            if (quiz == null) return NotFound(new { code = "QUIZ_NOT_FOUND" });
 
             if (quiz.AuthorId != User.FindFirstValue(ClaimTypes.NameIdentifier) && !User.IsInRole("Admin"))
-                return Forbid();
+                return BadRequest(new { code = "FORBIDDEN" });
 
             _context.Quizzes.Remove(quiz);
             await _context.SaveChangesAsync();
@@ -221,17 +221,16 @@ namespace QuizWiz_Backend.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var quiz = await _context.Quizzes.FindAsync(id);
-            if (quiz == null) return NotFound();
+            if (quiz == null) return NotFound(new { code = "QUIZ_NOT_FOUND" });
 
-            if (quiz.AuthorId != userId) return Forbid();
+            if (quiz.AuthorId != userId) return BadRequest(new { code = "FORBIDDEN" });
 
-            if (quiz.IsSubmitted) return BadRequest("Quiz został już zgłoszony.");
+            if (quiz.IsSubmitted) return BadRequest(new { code = "QUIZ_ALREADY_SUBMITTED" });
 
             quiz.IsSubmitted = true;
-
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Quiz zgłoszony do weryfikacji." });
+            return Ok();
         }
     }
 }

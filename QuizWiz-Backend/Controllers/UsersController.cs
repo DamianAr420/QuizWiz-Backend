@@ -54,7 +54,7 @@ namespace QuizWiz_Backend.Controllers
             var userId = GetCurrentUserId();
             var user = await _context.Users.FindAsync(userId);
 
-            if (user == null) return NotFound();
+            if (user == null) return NotFound(new { code = "USER_NOT_FOUND" });
 
             user.DisplayName = dto.DisplayName;
             user.SelectedFrame = dto.SelectedFrame;
@@ -133,7 +133,9 @@ namespace QuizWiz_Backend.Controllers
             var userId = GetCurrentUserId();
             var user = await _context.Users.FindAsync(userId);
 
-            if (user == null) return NotFound("Użytkownik nie istnieje");
+            if (user == null) return NotFound(new { code = "USER_NOT_FOUND" });
+
+            if (file == null || file.Length == 0) return BadRequest(new { code = "INVALID_FILE" });
 
             if (!string.IsNullOrEmpty(user.CloudinaryPublicId))
             {
@@ -141,7 +143,7 @@ namespace QuizWiz_Backend.Controllers
             }
 
             var uploadResult = await _imageService.UploadImageAsync(file);
-            if (uploadResult.Error != null) return BadRequest(uploadResult.Error.Message);
+            if (uploadResult.Error != null) return BadRequest(new { code = "UPLOAD_FAILED" });
 
             user.CloudinaryPublicId = uploadResult.PublicId;
             await _context.SaveChangesAsync();
