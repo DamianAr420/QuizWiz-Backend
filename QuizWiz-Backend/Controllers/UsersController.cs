@@ -151,6 +151,18 @@ namespace QuizWiz_Backend.Controllers
             return Ok(new { publicId = user.CloudinaryPublicId });
         }
 
+        [HttpPost("ping")]
+        public async Task<IActionResult> Ping()
+        {
+            var userId = GetCurrentUserId();
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return Unauthorized();
+
+            user.LastActive = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         private int CalculateStreakFromDates(List<DateTime> dates)
         {
             if (dates == null || !dates.Any()) return 0;

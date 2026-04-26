@@ -22,5 +22,6 @@ namespace QuizWiz_Backend.Classes
         public int Level => (Experience / 1000) + 1;
         public string? SelectedFrame { get; set; }
         public string? SelectedBackground { get; set; }
+        public DateTime LastActive { get; set; }
     }
 }

@@ -61,6 +61,25 @@ public class AuthController(AppDbContext context, IConfiguration config) : Contr
         return Ok(new AuthResponseDto(MapToUserDto(user), token));
     }
 
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = await context.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        user.LastActive = DateTime.MinValue;
+        await context.SaveChangesAsync();
+
+        return Ok(new { code = "SUCCESS_LOGOUT" });
+    }
+
     private static UserDto MapToUserDto(User user)
     {
         return new(

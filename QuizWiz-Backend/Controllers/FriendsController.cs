@@ -98,10 +98,18 @@ namespace QuizWiz_Backend.Controllers
             var userId = GetCurrentUserId();
             if (userId == 0) return Unauthorized(new { code = "UNAUTHORIZED" });
 
+            var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-5);
+
             var friends = await _context.Friendships
                 .Where(f => f.Status == "Accepted" && (f.RequesterId == userId || f.AddresseeId == userId))
-                .Join(_context.Users, f => (f.RequesterId == userId ? f.AddresseeId : f.RequesterId), u => u.Id,
-                      (f, u) => new { u.Id, u.DisplayName, isOnline = false })
+                .Join(_context.Users,
+                      f => (f.RequesterId == userId ? f.AddresseeId : f.RequesterId),
+                      u => u.Id,
+                      (f, u) => new {
+                          u.Id,
+                          u.DisplayName,
+                          isOnline = u.LastActive > fiveMinutesAgo
+                      })
                 .ToListAsync();
 
             return Ok(friends);
