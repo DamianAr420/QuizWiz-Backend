@@ -15,6 +15,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<UserInventory> UserInventories => Set<UserInventory>();
     public DbSet<Friendship> Friendships => Set<Friendship>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<Lobby> Lobbies => Set<Lobby>();
+    public DbSet<LobbyPlayer> LobbyPlayers => Set<LobbyPlayer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

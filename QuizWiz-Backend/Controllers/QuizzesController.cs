@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using QuizWiz_Backend.Classes;
 using QuizWiz_Backend.Data;
 using QuizWiz_Backend.DTOs;
+using QuizWiz_Backend.Services;
 using System.Security.Claims;
 
 namespace QuizWiz_Backend.Controllers
@@ -13,8 +14,15 @@ namespace QuizWiz_Backend.Controllers
     public class QuizzesController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly RewardService _rewardService;
 
-        public QuizzesController(AppDbContext context) => _context = context;
+        public QuizzesController(
+            AppDbContext context,
+            RewardService rewardService)
+        {
+            _context = context;
+            _rewardService = rewardService;
+        }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<QuizListDto>>> GetQuizzes()
@@ -147,33 +155,23 @@ namespace QuizWiz_Backend.Controllers
             var quiz = await _context.Quizzes.FindAsync(id);
             if (user == null || quiz == null) return NotFound();
 
-            double typeMultiplier = (quiz.IsOfficial || quiz.IsVerified) ? 1.0 : 0.2;
-
             var today = DateTime.UtcNow.Date;
+
             bool alreadyDoneToday = await _context.QuizAttempts
-                .AnyAsync(a => a.UserId == userId && a.QuizId == id && a.CompletedAt >= today);
+                .AnyAsync(a =>
+                    a.UserId == userId &&
+                    a.QuizId == id &&
+                    a.CompletedAt >= today);
 
-            double repeatMultiplier = 1.0;
-            bool canGetPerfectBonus = true;
+            var rewards = _rewardService.CalculateRewards(
+                dto.Score,
+                dto.TotalQuestions,
+                quiz.IsOfficial,
+                quiz.IsVerified,
+                alreadyDoneToday);
 
-            if (alreadyDoneToday)
-            {
-                repeatMultiplier = 0.4;
-                canGetPerfectBonus = false;
-            }
-
-            int expPerCorrect = 25;
-            int pointsPerCorrect = 5;
-            int perfectScoreBonus = 100;
-
-            int gainedExp = (int)(dto.Score * expPerCorrect * typeMultiplier * repeatMultiplier);
-            int gainedPoints = (int)(dto.Score * pointsPerCorrect * typeMultiplier * repeatMultiplier);
-
-            if (canGetPerfectBonus && dto.Score == dto.TotalQuestions && dto.TotalQuestions >= 3)
-            {
-                gainedExp += (int)(perfectScoreBonus * typeMultiplier);
-                gainedPoints += (int)(25 * typeMultiplier);
-            }
+            int gainedExp = rewards.Experience;
+            int gainedPoints = rewards.Points;
 
             int levelBefore = user.Level;
             user.Experience += gainedExp;

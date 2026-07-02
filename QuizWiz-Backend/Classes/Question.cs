@@ -4,11 +4,11 @@ namespace QuizWiz_Backend.Classes
 {
     public class Question
     {
-        public int Id { get; set; }
-        public required string Text { get; set; }
-        public required string CorrectAnswer { get; set; }
-        [Column(TypeName = "jsonb")]
-        public List<string> Distractors { get; set; } = new();
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Text { get; set; } = string.Empty;
+        public string CorrectAnswer { get; set; } = string.Empty;
+        public List<string> Distractors { get; set; } = [];
+
         public int QuizId { get; set; }
     }
 }

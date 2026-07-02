@@ -8,7 +8,10 @@ using QuizWiz_Backend.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+});
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -75,7 +78,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
+
+                if (!string.IsNullOrEmpty(accessToken) &&
+                   (path.StartsWithSegments("/chathub") || path.StartsWithSegments("/hubs/multiplayer")))
                 {
                     context.Token = accessToken;
                 }
@@ -85,6 +90,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddScoped<IImageService, CloudinaryService>();
+builder.Services.AddSingleton<GameManager>();
+builder.Services.AddScoped<RewardService>();
 
 var app = builder.Build();
 
@@ -107,5 +114,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapHub<ChatHub>("/chathub");
+app.MapHub<MultiplayerHub>("/hubs/multiplayer");
 
 app.Run();

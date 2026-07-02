@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuizWiz_Backend.Data;
@@ -11,9 +12,11 @@ using QuizWiz_Backend.Data;
 namespace QuizWiz_Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260501150936_AddMultiplayerLobbies")]
+    partial class AddMultiplayerLobbies
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -151,11 +154,6 @@ namespace QuizWiz_Backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CloudinaryPublicId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("cloudinarypublicid");
-
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("text")
@@ -190,10 +188,12 @@ namespace QuizWiz_Backend.Migrations
 
             modelBuilder.Entity("QuizWiz_Backend.Classes.Question", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CorrectAnswer")
                         .IsRequired()
@@ -202,7 +202,7 @@ namespace QuizWiz_Backend.Migrations
 
                     b.Property<string>("Distractors")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("jsonb")
                         .HasColumnName("distractors");
 
                     b.Property<int>("QuizId")
