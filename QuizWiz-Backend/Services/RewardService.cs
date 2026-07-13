@@ -35,8 +35,8 @@ namespace QuizWiz_Backend.Services
 
             if (isWinner)
             {
-                gainedExp += 100;
-                gainedPoints += 20;
+                gainedExp += (int)(100 * typeMultiplier * repeatMultiplier);
+                gainedPoints += (int)(20 * typeMultiplier * repeatMultiplier);
             }
 
             return new RewardResult

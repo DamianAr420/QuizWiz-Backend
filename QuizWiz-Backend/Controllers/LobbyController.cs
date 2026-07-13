@@ -45,7 +45,9 @@ namespace QuizWiz_Backend.Controllers
                 UserId = userId,
                 DisplayName = user.DisplayName,
                 IsReady = true,
-                CloudinaryPublicId = user.CloudinaryPublicId ?? string.Empty
+                CloudinaryPublicId = user.CloudinaryPublicId ?? string.Empty,
+                SelectedFrame = user.SelectedFrame ?? string.Empty,
+                SelectedBackground = user.SelectedBackground ?? string.Empty
             };
 
             _context.LobbyPlayers.Add(hostPlayer);
@@ -58,27 +60,37 @@ namespace QuizWiz_Backend.Controllers
         public async Task<IActionResult> JoinLobby(Guid id)
         {
             var userId = GetCurrentUserId();
+
             var lobby = await _context.Lobbies
                 .Include(l => l.Players)
                 .FirstOrDefaultAsync(l => l.Id == id);
 
-            if (lobby == null) return NotFound(new { code = "LOBBY_NOT_FOUND" });
-            if (lobby.Status != "Waiting") return BadRequest(new { code = "GAME_ALREADY_STARTED" });
-            if (lobby.Players.Count >= lobby.MaxPlayers) return BadRequest(new { code = "LOBBY_FULL" });
+            if (lobby == null)
+                return NotFound(new { code = "LOBBY_NOT_FOUND" });
 
-            if (lobby.Players.Any(p => p.UserId == userId)) return Ok(await GetLobbyInternal(id));
+            if (lobby.Players.Any(p => p.UserId == userId))
+                return Ok(await GetLobbyInternal(id));
+
+            if (lobby.Status != "Waiting")
+                return BadRequest(new { code = "GAME_ALREADY_STARTED" });
+
+            if (lobby.Players.Count >= lobby.MaxPlayers)
+                return BadRequest(new { code = "LOBBY_FULL" });
 
             var user = await _context.Users.FindAsync(userId);
 
-            if (user == null) return Unauthorized();
+            if (user == null)
+                return Unauthorized();
 
             var newPlayer = new LobbyPlayer
             {
                 LobbyId = lobby.Id,
                 UserId = userId,
-                DisplayName = user!.DisplayName,
+                DisplayName = user.DisplayName,
                 IsReady = false,
-                CloudinaryPublicId = user.CloudinaryPublicId ?? string.Empty
+                CloudinaryPublicId = user.CloudinaryPublicId ?? string.Empty,
+                SelectedFrame = user.SelectedFrame ?? string.Empty,
+                SelectedBackground = user.SelectedBackground ?? string.Empty
             };
 
             _context.LobbyPlayers.Add(newPlayer);
@@ -90,6 +102,7 @@ namespace QuizWiz_Backend.Controllers
         [HttpGet("public")]
         public async Task<ActionResult<List<LobbySummaryDto>>> GetPublicLobbies()
         {
+            var userId = GetCurrentUserId();
             var lobbies = await _context.Lobbies
                 .Where(l => !l.IsPrivate && l.Status == "Waiting")
                 .Select(l => new LobbySummaryDto(
@@ -98,7 +111,11 @@ namespace QuizWiz_Backend.Controllers
                     l.Players.Count,
                     l.MaxPlayers,
                     l.QuestionCount,
-                    _context.Users.Where(u => u.Id == l.HostId).Select(u => u.DisplayName).FirstOrDefault() ?? "Unknown"
+                    _context.Users
+                        .Where(u => u.Id == l.HostId)
+                        .Select(u => u.DisplayName)
+                        .FirstOrDefault() ?? "Unknown",
+                    l.Players.Any(p => p.UserId == userId)
                 ))
                 .ToListAsync();
 

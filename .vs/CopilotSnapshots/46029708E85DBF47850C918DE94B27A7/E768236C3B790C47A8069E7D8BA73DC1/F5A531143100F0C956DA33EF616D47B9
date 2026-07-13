@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QuizWiz_Backend.Data;
@@ -92,7 +92,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddScoped<IImageService, CloudinaryService>();
 builder.Services.AddSingleton<GameManager>();
 builder.Services.AddScoped<RewardService>();
-            builder.Services.AddScoped<GameFlowService>();
+builder.Services.AddSingleton<GameFlowService>();
 
 var app = builder.Build();
 

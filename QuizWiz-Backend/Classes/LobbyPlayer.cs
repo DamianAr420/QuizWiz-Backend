@@ -10,5 +10,7 @@
         public int Score { get; set; } = 0;
         public int Progress { get; set; } = 0;
         public string CloudinaryPublicId { get; set; } = string.Empty;
+        public string SelectedFrame { get; set; } = string.Empty;
+        public string SelectedBackground { get; set; } = string.Empty;
     }
 }

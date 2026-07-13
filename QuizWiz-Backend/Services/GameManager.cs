@@ -1,40 +1,68 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using QuizWiz_Backend.Classes;
 
-namespace QuizWiz_Backend.Services
+namespace QuizWiz_Backend.Services;
+
+public class GameManager
 {
-    public class GameManager
+    private readonly ConcurrentDictionary<Guid, GameState> _games = new();
+    private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _timers = new();
+
+    public void StartGame(Guid lobbyId, List<Guid> questionIds, List<int> playerIds)
     {
-        private readonly ConcurrentDictionary<Guid, GameState> _games = new();
+        CancelTimer(lobbyId);
 
-        public void StartGame(Guid lobbyId, List<Guid> questionIds, List<int> playerIds)
+        var state = new GameState
         {
-            var state = new GameState
-            {
-                LobbyId = lobbyId,
-                QuestionIds = questionIds,
-                CurrentQuestionIndex = 0
-            };
+            LobbyId = lobbyId,
+            QuestionIds = questionIds,
+            CurrentQuestionIndex = 0,
+            PlayerCount = playerIds.Count,
+            QuestionResolved = false,
+            GameEnded = false
+        };
 
-            foreach (var playerId in playerIds)
+        foreach (var playerId in playerIds)
+        {
+            state.PlayerScores[playerId] = 0;
+            state.CorrectAnswers[playerId] = 0;
+        }
+
+        _games[lobbyId] = state;
+    }
+
+    public GameState? GetGame(Guid lobbyId)
+        => _games.GetValueOrDefault(lobbyId);
+
+    public void RemoveGame(Guid lobbyId)
+    {
+        CancelTimer(lobbyId);
+        _games.TryRemove(lobbyId, out _);
+    }
+
+    public CancellationToken StartQuestionTimer(Guid lobbyId)
+    {
+        CancelTimer(lobbyId);
+
+        var cts = new CancellationTokenSource();
+
+        _timers[lobbyId] = cts;
+
+        return cts.Token;
+    }
+
+    public void CancelTimer(Guid lobbyId)
+    {
+        if (_timers.TryRemove(lobbyId, out var timer))
+        {
+            try
             {
-                state.PlayerScores[playerId] = 0;
-                state.CorrectAnswers[playerId] = 0;
+                timer.Cancel();
             }
-
-            _games[lobbyId] = state;
-        }
-
-        public GameState? GetGame(Guid lobbyId)
-        {
-            return _games.TryGetValue(lobbyId, out var state) ? state : null;
-        }
-
-        public void RemoveGame(Guid lobbyId)
-        {
-            _games.TryRemove(lobbyId, out _);
+            finally
+            {
+                timer.Dispose();
+            }
         }
     }
 }

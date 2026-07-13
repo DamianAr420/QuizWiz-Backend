@@ -6,6 +6,7 @@
         int CurrentPlayers,
         int MaxPlayers,
         int QuestionCount,
-        string HostName
+        string HostName,
+        bool IsMember
     );
 }
